@@ -101,6 +101,8 @@ public class MainFragment extends Fragment implements ActivityCompat.OnRequestPe
         while (lastKnownLocation == null) {
             lastKnownLocation = locationManager.getLastKnownLocation(provider);
         }
+        //Stop listening for updates once we have a last known location
+        locationManager.removeUpdates(this);
 
         mRecyclerView = (RecyclerView) view.findViewById(R.id.recyclerview);
         mRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(context));
@@ -258,8 +260,8 @@ public class MainFragment extends Fragment implements ActivityCompat.OnRequestPe
 
 
     /**
-     * Converts Foursquares photo JSONObject into a usable URL
-     * @param photo Foursquares photo JSONObject
+     * Converts Foursquare's photo JSONObject into a usable URL
+     * @param photo Foursquare's photo JSONObject
      * @return URL of photo
      */
     private String photoJSONToURL(JSONObject photo)
@@ -302,14 +304,7 @@ public class MainFragment extends Fragment implements ActivityCompat.OnRequestPe
 
     @Override
     public void onLocationChanged(Location location) {
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-            ActivityCompat.requestPermissions((Activity) context,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                    1);
-        }
-        //Stop listening for updates once we have a recent location
-        locationManager.removeUpdates(this);
     }
 
     @Override
