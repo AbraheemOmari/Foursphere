@@ -132,8 +132,8 @@ public class MainFragment extends Fragment implements ActivityCompat.OnRequestPe
              */
             //Uses the Foursquare's "explore" end-point which is intended for finding unspecific new venues
             String url = "https://api.foursquare.com/v2/venues/explore" +
-                    "?client_id=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" +
-                    "&client_secret=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" +
+                    "?client_id=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" +
+                    "&client_secret=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" +
                     "&v=20130815" +
                     "&ll=" +
                     latitude + "," + longitude +

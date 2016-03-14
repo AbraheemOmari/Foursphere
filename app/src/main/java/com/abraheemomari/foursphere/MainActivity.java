@@ -31,13 +31,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        if (savedInstanceState != null)
+        {
+            return;
+        }
+
         mainFragment = new MainFragment();
-        mapFragment = new SupportMapFragment();
+        mapFragment = SupportMapFragment.newInstance();
 
         //Add main fragment which is a scrollable RecyclerView listing nearby restaurants
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
-        ft.add(R.id.fragment_container, mainFragment);
+        ft.replace(R.id.fragment_container, mainFragment);
         ft.addToBackStack(null);
         ft.commit();
         fm.executePendingTransactions();
@@ -46,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onBackPressed() {
         //Allows us to return to our main fragment from the MapView
-        if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+        if (getSupportFragmentManager().getBackStackEntryCount() <= 1) {
             this.finish();
         } else {
             getSupportFragmentManager().popBackStack();
@@ -73,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //Add the markers to the map
         map.addMarker(userMarker);
-        map.addMarker(restaurantMarker);
+        map.addMarker(restaurantMarker).showInfoWindow();
 
         //Fit the camera of the MapView to our markers
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
@@ -81,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         builder.include(restaurantMarker.getPosition());
         LatLngBounds bounds = builder.build();
 
-        final CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 100);
+        final CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 250);
         map.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
             @Override
             public void onMapLoaded() {
@@ -103,6 +108,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         LatLng restaurantLatLng = new LatLng(restaurant.getLatitude(), restaurant.getLongitude());
         mapUpdate = new MapUpdate(restaurantLatLng, userLatLng, restaurant.getName());
 
+        if (mapFragment == null)
+        {
+            mapFragment = SupportMapFragment.newInstance();
+        }
         //Add the MapView's fragment to the screen now that the mapUpdate is ready, and call getMapAsync() to update the map
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
