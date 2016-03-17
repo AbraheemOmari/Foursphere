@@ -38,16 +38,16 @@ import java.util.ArrayList;
  *  The main fragment of the app;
  *  Holds a scrollable RecyclerView which holds a view for each nearby restaurant
  */
-public class MainFragment extends Fragment implements ActivityCompat.OnRequestPermissionsResultCallback, LocationListener{
+public class MainFragment extends Fragment{
     public interface mainFragListener {
-        public void restaurantSelected(Restaurant restaurant, Location lastKnownLocation);
+        public void restaurantSelected(Restaurant restaurant);
     }
 
     private Context context;
     private RecyclerView mRecyclerView;
     private ArrayList<Restaurant> restaurants;
     private mainFragListener listener;
-    private LocationManager locationManager;
+    private Location lastKnownLocation;
 
     public MainFragment() {
     }
@@ -65,57 +65,29 @@ public class MainFragment extends Fragment implements ActivityCompat.OnRequestPe
         return view;
     }
 
+    public void setLocation(Location location)
+    {
+        lastKnownLocation = location;
+    }
+
     /**
-     * Retrieves user's location via location services,
-     * creates a request to Foursquare's servers for nearby restaurants,
+     * Creates a request to Foursquare's servers for nearby restaurants,
      * and populates the RecyclerView with data
      * @param view The fragment's inflated layout
      */
     public void initialize(View view)
     {
-        Location lastKnownLocation = null;
-        locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-
-        //Checks if GPS is enabled and opens settings if not
-        boolean GPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-
-        if (!GPSEnabled) {
-            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
-        }
-
-        Criteria criteria = new Criteria();
-        String provider = locationManager.getBestProvider(criteria, false);
-
-        //Check if app has permissions for location services and request them if not
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions((Activity) context,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                    1);
-        }
-
-        //Request user's location every 5 seconds and wait/loop until one is obtained
-        //If the device has just turned on then getLastKnownLocation may return null
-        // until the location listener finds a location
-        locationManager.requestLocationUpdates(provider, 5000, 0, this);
-        while (lastKnownLocation == null) {
-            lastKnownLocation = locationManager.getLastKnownLocation(provider);
-        }
-
         mRecyclerView = (RecyclerView) view.findViewById(R.id.recyclerview);
         mRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(context));
 
         restaurants = new ArrayList<>();
 
-        final Location tempLastLocation = lastKnownLocation;
 
         // Create adapter passing in the sample user data
         final RestaurantsAdapter.restaurantAdapterListener adapterListener = new RestaurantsAdapter.restaurantAdapterListener() {
             @Override
             public void restaurantSelected(Restaurant restaurant) {
-                listener.restaurantSelected(restaurant, tempLastLocation);
+                listener.restaurantSelected(restaurant);
             }
         };
 
@@ -207,7 +179,7 @@ public class MainFragment extends Fragment implements ActivityCompat.OnRequestPe
                                         }
 
                                         //After processing each venue separately, update the RecyclerViews adapter
-                                        RestaurantsAdapter adapter = new RestaurantsAdapter(context, restaurants, adapterListener, tempLastLocation);
+                                        RestaurantsAdapter adapter = new RestaurantsAdapter(context, restaurants, adapterListener, lastKnownLocation);
                                         mRecyclerView.swapAdapter(adapter, true);
                                     } else {
                                         //JSON request failed
@@ -252,7 +224,7 @@ public class MainFragment extends Fragment implements ActivityCompat.OnRequestPe
             //Check if the database actually has data in it already
             if (Database.getInstance(context).isInitialized()) {
                 restaurants = Database.getInstance(context).getVenues();
-                adapter = new RestaurantsAdapter(context, restaurants, adapterListener, tempLastLocation);
+                adapter = new RestaurantsAdapter(context, restaurants, adapterListener, lastKnownLocation);
                 mRecyclerView.swapAdapter(adapter, true);
             }
         }
@@ -279,61 +251,4 @@ public class MainFragment extends Fragment implements ActivityCompat.OnRequestPe
             return null;
         }
     }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case 1: {
-                if (grantResults.length > 0) {
-                    //Check each requested permission and exit the app if not granted
-                    for(int result: grantResults)
-                    {
-                        if (result != PackageManager.PERMISSION_GRANTED)
-                        {
-                            System.exit(0);
-                        }
-                    }
-                } else {
-                    System.exit(0);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onPause()
-    {
-        super.onPause();
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions((Activity) context,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                    1);
-        }
-        //Stop listening for updates once we have a recent location
-        locationManager.removeUpdates(this);
-    }
-
-
-    @Override
-    public void onLocationChanged(Location location) {
-
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
-    }
-
 }
