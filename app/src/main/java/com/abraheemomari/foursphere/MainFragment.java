@@ -83,7 +83,7 @@ public class MainFragment extends Fragment{
         restaurants = new ArrayList<>();
 
 
-        // Create adapter passing in the sample user data
+        // Create adapter and set listener
         final RestaurantsAdapter.restaurantAdapterListener adapterListener = new RestaurantsAdapter.restaurantAdapterListener() {
             @Override
             public void restaurantSelected(Restaurant restaurant) {
